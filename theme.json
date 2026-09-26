@@ -1,0 +1,40 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"settings": {
+		"appearanceTools": false,
+		"layout": { "contentSize": "980px", "wideSize": "1440px" },
+		"color": {
+			"defaultPalette": false,
+			"defaultGradients": false,
+			"defaultDuotone": false,
+			"palette": [
+				{ "slug": "pink", "name": "Pink", "color": "#EE4FD9" },
+				{ "slug": "pink-dark", "name": "Pink dark", "color": "#C2289F" },
+				{ "slug": "plum", "name": "Plum", "color": "#9E1B82" },
+				{ "slug": "pink-hover", "name": "Pink hover", "color": "#F46BE0" },
+				{ "slug": "ink", "name": "Ink", "color": "#2E1A33" },
+				{ "slug": "muted", "name": "Muted", "color": "#7A6280" },
+				{ "slug": "muted-2", "name": "Muted 2", "color": "#6B4C70" },
+				{ "slug": "border", "name": "Border", "color": "#F8C8EC" },
+				{ "slug": "pink-soft", "name": "Pink soft", "color": "#F7A8E4" },
+				{ "slug": "bg-soft", "name": "Background soft", "color": "#FFF0FA" },
+				{ "slug": "bg-banner", "name": "Background banner", "color": "#FFE0F5" },
+				{ "slug": "bg-footer", "name": "Background footer", "color": "#FFD6F1" },
+				{ "slug": "white", "name": "White", "color": "#FFFFFF" }
+			]
+		},
+		"typography": {
+			"defaultFontSizes": false,
+			"fontFamilies": [
+				{ "slug": "fredoka", "name": "Fredoka", "fontFamily": "Fredoka, sans-serif" },
+				{ "slug": "nunito", "name": "Nunito", "fontFamily": "Nunito, sans-serif" }
+			]
+		},
+		"spacing": { "defaultSpacingSizes": false }
+	},
+	"styles": {
+		"color": { "background": "#FFFFFF", "text": "#2E1A33" },
+		"typography": { "fontFamily": "var(--wp--preset--font-family--nunito)" }
+	}
+}
