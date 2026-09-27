@@ -419,3 +419,21 @@ function larita_render_checkout() {
 	echo do_shortcode( '[woocommerce_checkout]' );
 }
 
+/* ---------------------------------------------------------------------------
+ * Custom order numbers: "L" + a sequence starting at LARITA_ORDER_NUMBER_START,
+ * shown to the customer (thank-you page, emails, wp-admin) instead of the
+ * internal database ID. The internal ID is untouched — this only changes the
+ * displayed/get_order_number() value.
+ * ------------------------------------------------------------------------- */
+
+define( 'LARITA_ORDER_NUMBER_START', 1082 );
+
+add_filter( 'woocommerce_order_number', function ( $order_number, $order ) {
+	$offset = get_option( 'larita_order_number_offset' );
+	if ( false === $offset ) {
+		$offset = LARITA_ORDER_NUMBER_START - $order->get_id();
+		add_option( 'larita_order_number_offset', $offset, '', false );
+	}
+	return 'L' . ( $order->get_id() + (int) $offset );
+}, 10, 2 );
+
