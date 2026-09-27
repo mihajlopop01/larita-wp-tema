@@ -449,3 +449,12 @@ add_filter( 'woocommerce_webhook_http_args', function ( $args ) {
 	return $args;
 } );
 
+// The REST API treats an order's date as read-only. Let an import script
+// (scripts/shopify-orders-import.py) keep the original date by sending date_created_gmt.
+add_filter( 'woocommerce_rest_pre_insert_shop_order_object', function ( $order, $request ) {
+	if ( ! empty( $request['date_created_gmt'] ) ) {
+		$order->set_date_created( $request['date_created_gmt'] . '+00:00' );
+	}
+	return $order;
+}, 10, 2 );
+
