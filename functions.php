@@ -420,20 +420,32 @@ function larita_render_checkout() {
 }
 
 /* ---------------------------------------------------------------------------
- * Custom order numbers: "L" + a sequence starting at LARITA_ORDER_NUMBER_START,
- * shown to the customer (thank-you page, emails, wp-admin) instead of the
- * internal database ID. The internal ID is untouched — this only changes the
- * displayed/get_order_number() value.
+ * Custom order numbers: L1082, L1083, ... assigned once per checkout order and
+ * stored on the order, so the sequence has no gaps even though internal IDs
+ * skip (checkout drafts consume IDs). The internal ID is untouched.
+ * Orders created outside checkout (wp-admin, REST) keep their plain ID.
  * ------------------------------------------------------------------------- */
 
 define( 'LARITA_ORDER_NUMBER_START', 1082 );
 
-add_filter( 'woocommerce_order_number', function ( $order_number, $order ) {
-	$offset = get_option( 'larita_order_number_offset' );
-	if ( false === $offset ) {
-		$offset = LARITA_ORDER_NUMBER_START - $order->get_id();
-		add_option( 'larita_order_number_offset', $offset, '', false );
+add_action( 'woocommerce_checkout_order_created', function ( $order ) {
+	if ( $order->get_meta( '_larita_order_number' ) ) {
+		return;
 	}
-	return 'L' . ( $order->get_id() + (int) $offset );
+	$next = max( LARITA_ORDER_NUMBER_START, (int) get_option( 'larita_next_order_number', 0 ) );
+	update_option( 'larita_next_order_number', $next + 1, false );
+	$order->update_meta_data( '_larita_order_number', 'L' . $next );
+	$order->save_meta_data();
+} );
+
+add_filter( 'woocommerce_order_number', function ( $order_number, $order ) {
+	return $order->get_meta( '_larita_order_number' ) ?: $order_number;
 }, 10, 2 );
+
+// Google Apps Script answers every POST with a 302; without following it,
+// WooCommerce logs a failed delivery and disables the webhook after 5.
+add_filter( 'woocommerce_webhook_http_args', function ( $args ) {
+	$args['redirection'] = 5;
+	return $args;
+} );
 
