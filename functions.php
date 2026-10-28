@@ -472,6 +472,33 @@ add_action( 'woocommerce_webhook_disabled_due_delivery_failures', function ( $we
 	);
 } );
 
+/* ---------------------------------------------------------------------------
+ * Outgoing mail over SMTP (Titan Mail, larita@themerchpack.com).
+ * Hostinger's PHP mail() sends unsigned mail for themerchpack.com, which Gmail
+ * puts in spam, so wp_mail() logs in to Titan (as Danci, Rage and Rade do).
+ * Address and password are NOT in the theme (this repo is on GitHub) —
+ * they live in wp-config.php on the server as SHOP_SMTP_USER / SHOP_SMTP_PASS.
+ * Without them, nothing changes.
+ * ------------------------------------------------------------------------- */
+
+add_action( 'phpmailer_init', function ( $phpmailer ) {
+	if ( ! defined( 'SHOP_SMTP_USER' ) || ! defined( 'SHOP_SMTP_PASS' ) ) {
+		return;
+	}
+	$phpmailer->isSMTP();
+	$phpmailer->Host       = 'smtp.titan.email';
+	$phpmailer->Port       = 587;
+	$phpmailer->SMTPSecure = 'tls';
+	$phpmailer->SMTPAuth   = true;
+	$phpmailer->Username   = SHOP_SMTP_USER;
+	$phpmailer->Password   = SHOP_SMTP_PASS;
+	$phpmailer->setFrom( SHOP_SMTP_USER, $phpmailer->FromName, false );
+} );
+
+if ( defined( 'SHOP_SMTP_USER' ) ) {
+	add_filter( 'woocommerce_email_from_address', fn() => SHOP_SMTP_USER );
+}
+
 // The REST API treats an order's date as read-only. Let an import script
 // (scripts/shopify-orders-import.py) keep the original date by sending date_created_gmt.
 add_filter( 'woocommerce_rest_pre_insert_shop_order_object', function ( $order, $request ) {
