@@ -9,7 +9,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'LARITA_VERSION', '2.0.1' );
+define( 'LARITA_VERSION', '2.0.2' );
 
 /* ---------------------------------------------------------------------------
  * Setup & assets
@@ -448,11 +448,17 @@ add_filter( 'woocommerce_order_number', function ( $order_number, $order ) {
 // that still carries the JSON body, Google answers 400, and after 6 such
 // "failures" WooCommerce disables the webhook while the rows still get written.
 
-// The invoicing system reads "Način plaćanja" from the sheet and needs exactly
-// this text for pouzećem, whatever the gateway's title says.
+// The invoicing app reads "Način plaćanja" from the sheet by exact text:
+// "Plaćanje pouzećem" and "Kartica" are the only values it knows, anything
+// else becomes cash on the fiscal invoice. So send those, whatever the
+// gateway's own title says.
 add_filter( 'woocommerce_webhook_payload', function ( $payload, $resource ) {
-	if ( 'order' === $resource && isset( $payload['payment_method'] ) && 'cod' === $payload['payment_method'] ) {
-		$payload['payment_method_title'] = 'Plaćanje pouzećem';
+	$titles = array(
+		'cod'       => 'Plaćanje pouzećem',
+		'corvuspay' => 'Kartica',
+	);
+	if ( 'order' === $resource && isset( $payload['payment_method'], $titles[ $payload['payment_method'] ] ) ) {
+		$payload['payment_method_title'] = $titles[ $payload['payment_method'] ];
 	}
 	return $payload;
 }, 10, 2 );
@@ -474,4 +480,39 @@ add_filter( 'woocommerce_rest_pre_insert_shop_order_object', function ( $order, 
 	}
 	return $order;
 }, 10, 2 );
+
+/* ---------------------------------------------------------------------------
+ * Order confirmation email ("Processing order") — Serbian copy for Larita.
+ * Body markup lives in woocommerce/emails/customer-processing-order.php;
+ * this sets the subject/heading/footer defaults so they're right even
+ * before anyone opens WooCommerce → Settings → Emails.
+ * ------------------------------------------------------------------------- */
+
+add_filter( 'woocommerce_email_subject_customer_processing_order', function () {
+	return 'Vaša porudžbina u Larita Shop-u je primljena! (#{order_number})';
+} );
+
+add_filter( 'woocommerce_email_heading_customer_processing_order', function () {
+	return 'Hvala na porudžbini!';
+} );
+
+add_filter( 'woocommerce_email_footer_text', function () {
+	return 'Larita Shop · larita.shop';
+} );
+
+// Brand colors for the email chrome (header/footer background, links, button).
+add_action( 'init', function () {
+	$colors = array(
+		'woocommerce_email_base_color'            => '#EE4FD9',
+		'woocommerce_email_background_color'      => '#FFF0FA',
+		'woocommerce_email_body_background_color' => '#FFFFFF',
+		'woocommerce_email_text_color'             => '#2E1A33',
+		'woocommerce_email_footer_text_color'     => '#7A6280',
+	);
+	foreach ( $colors as $option => $value ) {
+		if ( false === get_option( $option, false ) ) {
+			update_option( $option, $value );
+		}
+	}
+} );
 
