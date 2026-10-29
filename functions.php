@@ -423,12 +423,13 @@ function larita_render_checkout() {
  * Custom order numbers: L1082, L1083, ... assigned once per checkout order and
  * stored on the order, so the sequence has no gaps even though internal IDs
  * skip (checkout drafts consume IDs). The internal ID is untouched.
- * Orders created outside checkout (wp-admin, REST) keep their plain ID.
+ * Orders created outside checkout (wp-admin, REST) keep their plain ID,
+ * except orders the Angora app creates over REST (meta angora_app).
  * ------------------------------------------------------------------------- */
 
 define( 'LARITA_ORDER_NUMBER_START', 1082 );
 
-add_action( 'woocommerce_checkout_order_created', function ( $order ) {
+function larita_assign_order_number( $order ) {
 	if ( $order->get_meta( '_larita_order_number' ) ) {
 		return;
 	}
@@ -436,7 +437,15 @@ add_action( 'woocommerce_checkout_order_created', function ( $order ) {
 	update_option( 'larita_next_order_number', $next + 1, false );
 	$order->update_meta_data( '_larita_order_number', 'L' . $next );
 	$order->save_meta_data();
-} );
+}
+
+add_action( 'woocommerce_checkout_order_created', 'larita_assign_order_number' );
+
+add_action( 'woocommerce_rest_insert_shop_order_object', function ( $order, $request, $creating ) {
+	if ( $creating && $order->get_meta( 'angora_app' ) ) {
+		larita_assign_order_number( $order );
+	}
+}, 10, 3 );
 
 add_filter( 'woocommerce_order_number', function ( $order_number, $order ) {
 	return $order->get_meta( '_larita_order_number' ) ?: $order_number;
