@@ -516,3 +516,4 @@ add_filter( 'woocommerce_rest_pre_insert_shop_order_object', function ( $order, 
 	}
 	return $order;
 }, 10, 2 );
+require_once __DIR__ . '/cg-tracker.php'; // Creator Goods site tracker (Analitika)
