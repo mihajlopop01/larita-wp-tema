@@ -777,3 +777,8 @@ body.l-locked { overflow: hidden; }
 	.l-page__card { padding: 28px 20px; border-radius: 22px; font-size: 15px; }
 	.l-page__title { font-size: 30px; }
 }
+
+/* Footer credits (copyright bar) */
+footer .cg-credits{display:inline-block;margin-left:10px;font-size:.92em;opacity:.85}
+footer .cg-credits a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+@media (max-width:640px){footer .cg-credits{display:block;margin:4px 0 0}}
