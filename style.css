@@ -3,9 +3,14 @@ Theme Name: Larita
 Theme URI: https://larita.shop
 Description: Larita Shop theme, built from the Claude Design handoff. Classic PHP templates + theme.json tokens; all styles live in assets/css/larita.css.
 Author: Larita
-Version: 2.0.5
+Version: 2.1.0
 Requires at least: 6.4
 Requires PHP: 8.0
 License: GPLv2 or later
 Text Domain: larita
 */
+
+/* Footer credits (copyright bar) */
+.cg-credits{display:inline-block;margin-left:10px;font-size:.92em;opacity:.85}
+.cg-credits a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+@media (max-width:640px){.cg-credits{display:block;margin:4px 0 0}}

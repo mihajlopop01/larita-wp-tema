@@ -54,13 +54,13 @@ $links = function ( $items ) {
 			</div>
 		</div>
 		<div class="l-footer__bottom">
-			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> Larita Shop</span>
+			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> Larita Shop <span class="cg-credits">Powered by <a href="https://creatorgoods.co/" target="_blank" rel="noopener">Creator Goods</a><span class="cg-credits__sep"> · </span>Designed by <a href="https://starkstudio.rs/" target="_blank" rel="noopener">Stark Studio</a></span></span>
 			<img class="l-footer__avatar-m" src="<?php echo esc_url( $avatar ); ?>" alt="">
 		</div>
 	</footer>
 <?php elseif ( 'bar' === $variant ) : ?>
 	<footer class="l-footbar">
-		<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> Larita Shop</span>
+		<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> Larita Shop <span class="cg-credits">Powered by <a href="https://creatorgoods.co/" target="_blank" rel="noopener">Creator Goods</a><span class="cg-credits__sep"> · </span>Designed by <a href="https://starkstudio.rs/" target="_blank" rel="noopener">Stark Studio</a></span></span>
 		<div class="l-footbar__links"><?php $links( array( $help_links[0], $help_links[1], $contact ) ); ?></div>
 	</footer>
 <?php endif; ?>

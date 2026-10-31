@@ -3,23 +3,40 @@
  * Payment box + "ZAVRŠI KUPOVINU". Returned as an AJAX fragment, so the root
  * keeps id="payment" / woocommerce-checkout-payment.
  *
- * The store only offers cash on delivery; the gateway radio stays in the form
- * (hidden) so WooCommerce receives payment_method as usual.
+ * One gateway: its radio stays in the form (hidden) so WooCommerce receives payment_method
+ * as usual. Several (card next to COD): one visible box each. COD only in Serbia (functions.php).
  */
 defined( 'ABSPATH' ) || exit;
 
 $gateways = WC()->cart->needs_payment() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
 $first    = $gateways ? array_key_first( $gateways ) : '';
 ?>
+<?php
+$chosen  = WC()->session ? WC()->session->get( 'chosen_payment_method' ) : '';
+$current = isset( $gateways[ $chosen ] ) ? $chosen : $first;
+$multi   = count( $gateways ) > 1;
+?>
 <div id="payment" class="woocommerce-checkout-payment l-payment">
 	<?php if ( $gateways ) : ?>
-		<ul class="wc_payment_methods payment_methods methods l-payment__methods">
+		<ul class="wc_payment_methods payment_methods methods l-payment__methods<?php echo $multi ? ' l-payment__methods--multi' : ''; ?>">
 			<?php foreach ( $gateways as $id => $gateway ) : ?>
 				<li class="wc_payment_method payment_method_<?php echo esc_attr( $id ); ?>">
-					<input id="payment_method_<?php echo esc_attr( $id ); ?>" type="radio" class="input-radio" name="payment_method" value="<?php echo esc_attr( $id ); ?>" <?php checked( $id, $first ); ?>>
+					<?php if ( $multi ) : ?><label class="l-cod"><?php endif; ?>
+					<input id="payment_method_<?php echo esc_attr( $id ); ?>" type="radio" class="input-radio" name="payment_method" value="<?php echo esc_attr( $id ); ?>" <?php checked( $id, $current ); ?>>
+					<?php if ( $multi ) : ?>
+						<div class="l-cod__text">
+							<?php if ( 'cod' === $id ) : ?>
+								<b>Plaćanje pouzećem</b><span>Plaćate kuriru prilikom dostave</span>
+							<?php else : ?>
+								<b><?php echo esc_html( $gateway->get_title() ); ?></b><?php if ( $gateway->get_description() ) : ?><span><?php echo wp_kses_post( $gateway->get_description() ); ?></span><?php endif; ?>
+							<?php endif; ?>
+						</div>
+					</label>
+					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>
 		</ul>
+		<?php if ( ! $multi ) : ?>
 		<div class="l-cod">
 			<?php echo larita_icon( 'cash', 24 ); ?>
 			<div class="l-cod__text">
@@ -30,6 +47,9 @@ $first    = $gateways ? array_key_first( $gateways ) : '';
 				<?php endif; ?>
 			</div>
 		</div>
+		<?php endif; ?>
+	<?php else : ?>
+		<p class="l-payment__none">Za dostavu van Srbije plaćanje je moguće samo karticom, a ono trenutno nije dostupno. Pišite nam na email prodavnice.</p>
 	<?php endif; ?>
 
 	<div class="form-row place-order l-place-order">

@@ -338,6 +338,9 @@ add_filter( 'woocommerce_checkout_fields', function ( $fields ) {
 		$field['class']       = array( $class );
 		$billing[ 'billing_' . $key ] = $field;
 	}
+	$billing['billing_postcode']['custom_attributes'] = array( 'inputmode' => 'numeric', 'maxlength' => '5' );
+	// The country decides shipping and payment: refresh the order box on change.
+	$billing['billing_country']['class'][] = 'update_totals_on_change';
 	$fields['billing'] = $billing;
 	unset( $fields['order'] );
 	return $fields;
@@ -360,6 +363,10 @@ add_filter( 'woocommerce_get_country_locale', function ( $locales ) {
 		foreach ( array_keys( larita_checkout_field_spec() ) as $key ) {
 			unset( $locales[ $country ][ $key ]['label'], $locales[ $country ][ $key ]['placeholder'], $locales[ $country ][ $key ]['priority'] );
 		}
+	}
+	// Some of these countries have WooCommerce states; the design has no Okrug field.
+	foreach ( array_keys( larita_countries() ) as $country ) {
+		$locales[ $country ]['state'] = array( 'required' => false, 'hidden' => true );
 	}
 	return $locales;
 } );
@@ -399,11 +406,73 @@ add_filter( 'ngettext_woocommerce', function ( $translation, $single, $plural, $
 	return $translation;
 }, 10, 4 );
 
-// The site language is English; the design shows the country in Serbian.
-add_filter( 'woocommerce_countries', function ( $countries ) {
-	$countries['RS'] = 'Srbija';
-	return $countries;
+/** Countries the shop sells to (WooCommerce "Selling location(s)"), Serbian names — same as Rage and Luka & Luna. */
+function larita_countries() {
+	return array(
+		'RS' => 'Srbija',
+		'BA' => 'Bosna i Hercegovina',
+		'ME' => 'Crna Gora',
+		'HR' => 'Hrvatska',
+		'MK' => 'Severna Makedonija',
+		'SI' => 'Slovenija',
+	);
+}
+
+// The site language is English; the design shows the countries in Serbian.
+add_filter( 'woocommerce_countries', fn( $countries ) => array_merge( $countries, larita_countries() ) );
+
+/* ---------------------------------------------------------------------------
+ * Shipping and payment abroad (same rules as Rage and Luka & Luna).
+ * Serbia: zone "Srbija", flat 350 RSD. Other countries: zone "Inostranstvo", its flat
+ * rate priced here by cart weight (product weights in kg): <= 0.2 kg 699, <= 0.5 kg 999,
+ * above 1299 RSD. Cash on delivery only in Serbia; abroad the customer pays by card
+ * (CorvusPay, installed by the owner — until then the payment box says so).
+ * ------------------------------------------------------------------------- */
+
+function larita_abroad_shipping_cost( $kg ) {
+	if ( $kg <= 0.2 ) {
+		return 699;
+	}
+	return $kg <= 0.5 ? 999 : 1299;
+}
+
+add_filter( 'woocommerce_package_rates', function ( $rates, $package ) {
+	if ( 'RS' === ( $package['destination']['country'] ?? 'RS' ) ) {
+		return $rates;
+	}
+	$kg = 0;
+	foreach ( $package['contents'] as $item ) {
+		$kg += (float) $item['data']->get_weight() * $item['quantity'];
+	}
+	foreach ( $rates as $rate ) {
+		if ( 'flat_rate' === $rate->get_method_id() ) {
+			$rate->set_cost( larita_abroad_shipping_cost( round( $kg, 3 ) ) );
+		}
+	}
+	return $rates;
+}, 10, 2 );
+
+add_filter( 'woocommerce_available_payment_gateways', function ( $gateways ) {
+	$customer = function_exists( 'WC' ) ? WC()->customer : null;
+	$country  = $customer ? ( $customer->get_shipping_country() ?: $customer->get_billing_country() ) : '';
+	if ( $country && 'RS' !== $country ) {
+		unset( $gateways['cod'] );
+	}
+	return $gateways;
 } );
+
+// Postcode: 4 digits in Slovenia and North Macedonia, 5 elsewhere; phone with at least 8 digits.
+add_action( 'woocommerce_after_checkout_validation', function ( $data, $errors ) {
+	$postcode = trim( (string) ( $data['billing_postcode'] ?? '' ) );
+	$digits   = in_array( $data['billing_country'] ?? '', array( 'SI', 'MK' ), true ) ? 4 : 5;
+	if ( '' !== $postcode && ! preg_match( '/^\d{' . $digits . '}$/', $postcode ) ) {
+		$errors->add( 'billing_postcode_validation', 'Poštanski broj ima ' . $digits . ( 5 === $digits ? ' cifara.' : ' cifre.' ), array( 'id' => 'billing_postcode' ) );
+	}
+	$phone = (string) ( $data['billing_phone'] ?? '' );
+	if ( '' !== trim( $phone ) && strlen( preg_replace( '/\D/', '', $phone ) ) < 8 ) {
+		$errors->add( 'billing_phone_validation', 'Unesite ispravan broj telefona.', array( 'id' => 'billing_phone' ) );
+	}
+}, 10, 2 );
 add_filter( 'woocommerce_cart_needs_shipping_address', '__return_false' );
 
 /* ---------------------------------------------------------------------------

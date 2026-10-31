@@ -448,6 +448,11 @@ body.l-locked { overflow: hidden; }
 
 .l-payment { display: flex; flex-direction: column; gap: 20px; }
 .l-payment__methods { display: none; }
+.l-payment__methods--multi { display: block; list-style: none; margin: 0 0 12px; padding: 0; }
+.l-payment__methods--multi li { margin: 0 0 8px; }
+.l-payment__methods--multi .l-cod { cursor: pointer; }
+.l-payment__methods--multi .l-cod input { accent-color: var(--pink-dark); flex: none; }
+.l-payment__none { margin: 0 0 12px; font-size: 14px; }
 .l-cod {
 	display: flex; gap: 14px; padding: 18px 20px; background: var(--bg-banner);
 	border: 2px solid var(--pink-soft); border-radius: 18px;
